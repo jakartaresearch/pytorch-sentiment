@@ -1,7 +1,7 @@
 import os
 import os.path
 import torch
-from utils import download_and_extract_archive
+from torchsenti.datasets.utils import download_and_extract_archive
 
 class TripAdvisor:
     """ Trip Advisor <http://times.cs.uiuc.edu/~wang296/Data/> Dataset
