@@ -84,10 +84,11 @@ class TripAdvisor:
     def convert_data(self):
         """Convert *.dat file to .csv file"""
         
-        data_file = glob.glob(self.raw_folder+'/*.dat')
+        if os.path.exists(os.path.join(self.processed_folder, 'Trip Advisor Dataset.csv')):
+            print('Trip Advisor Dataset.csv is already owned')
+            return
         
-        if len(data_file) == 0:
-            raise RuntimeError('*.dat file not found')
+        data_file = glob.glob(self.raw_folder+'/*.dat')
         
         use_features = ['<Author>', '<Content>', '<Date>', '<No. Reader>', '<No. Helpful>',
                         '<Overall>', '<Value>', '<Rooms>', '<Location>', '<Cleanliness>',
@@ -125,3 +126,26 @@ class TripAdvisor:
         
         print('Processed Done !')
         shutil.rmtree(self.raw_folder)
+        
+        
+    def split_dataset(self, train_size, random_state):
+        """
+        Args :
+            train_size : size of train data (between 0 and 1)
+            random_state : seed value
+        
+        return X_train, y_train, X_test, y_test in DataFrame format
+        """
+        
+        dataframe = pd.read_csv(os.path.join(self.processed_folder, 'Trip Advisor Dataset.csv'))
+        
+        train = dataframe.sample(frac=train_size, random_state=random_state)
+        test = dataframe.drop(train.index)
+        
+        X_train = train.Content
+        y_train = train.iloc[:, 3:]
+        
+        X_test = test.Content
+        y_test = test.iloc[:, 3:]
+        
+        return X_train, y_train, X_test, y_test
