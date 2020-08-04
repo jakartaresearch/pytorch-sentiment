@@ -38,7 +38,7 @@ class MovieReview():
         return (os.path.exists(self.raw_folder))
 
     def download_data(self):
-        """Download the IMDB data if it doesn't exist in raw_folder already."""
+        """Download the dataset if it doesn't exist in raw_folder already."""
 
         if self._check_exists():
             return
