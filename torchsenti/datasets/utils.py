@@ -6,6 +6,7 @@ import errno
 import tarfile
 from typing import Any, Callable, List, Iterable, Optional, TypeVar
 import zipfile
+from pyunpack import Archive
 
 import torch
 from torch.utils.model_zoo import tqdm
@@ -106,7 +107,10 @@ def _is_gzip(filename: str) -> bool:
 
 
 def _is_zip(filename: str) -> bool:
-    return filename.endswith(".zip")            
+    return filename.endswith(".zip")
+
+def _is_rar(filename: str) -> bool:
+    return filename.endswith(".rar")
             
 def extract_archive(from_path: str, to_path: Optional[str] = None, remove_finished: bool = True) -> None:
     if to_path is None:
@@ -128,6 +132,8 @@ def extract_archive(from_path: str, to_path: Optional[str] = None, remove_finish
     elif _is_zip(from_path):
         with zipfile.ZipFile(from_path, 'r') as z:
             z.extractall(to_path)
+    elif _is_rar(from_path):
+        Archive(from_path).extractall(to_path)
     else:
         raise ValueError("Extraction of {} not supported".format(from_path))
 
