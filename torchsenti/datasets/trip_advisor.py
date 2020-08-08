@@ -22,7 +22,6 @@ class TripAdvisor:
     """
     
     resources = ("http://times.cs.uiuc.edu/~wang296/Data/LARA/TripAdvisor/Review_Texts.zip")
-    dataset_file = 'dataset.pt'
     
     def __init__(self, root, processed=False, download=False):
         self.root = root
@@ -41,7 +40,10 @@ class TripAdvisor:
             print('Get Processed Dataset !')
             os.makedirs(self.processed_folder, exist_ok=True)
             self.convert_data()
-
+            data, target = self.load_dataset()
+            self.data = data
+            self.target = target
+            
         else :
             print('Get Raw Dataset !')
 
@@ -54,7 +56,6 @@ class TripAdvisor:
                     raise RuntimeError('Raw Dataset not found.' +
                                        ' You can use download=True to download it')
 
-        data_file = self.dataset_file
 
     
     @property
@@ -90,7 +91,7 @@ class TripAdvisor:
         
         data_file = glob.glob(self.raw_folder+'/*.dat')
         
-        use_features = ['<Author>', '<Content>', '<Date>', '<No. Reader>', '<No. Helpful>',
+        use_features = ['<Content>', '<No. Reader>', '<No. Helpful>',
                         '<Overall>', '<Value>', '<Rooms>', '<Location>', '<Cleanliness>',
                         '<Check in / front desk>', '<Service>', '<Business service>']
         
@@ -116,17 +117,23 @@ class TripAdvisor:
                             
         print('Total reviews : ', len(reviews))
         
-        col = ['Author','Content','Date','No.Reader','No.Helpful','Overall',
+        col = ['Content', 'No.Reader','No.Helpful','Overall',
                'Value','Rooms','Location','Cleanliness','Check in front desk',
                'Service','Business service']
 
         df = pd.DataFrame(reviews, columns=col)
+        df.dropna(axis='index', how='all', inplace=True)
         
         df.to_csv(self.processed_folder+'/Trip Advisor Dataset.csv', index=False)
         
         print('Processed Done !')
         shutil.rmtree(self.raw_folder)
         
+    def load_dataset(self):
+        dataframe = pd.read_csv(os.path.join(self.processed_folder, 'Trip Advisor Dataset.csv'))
+        data = dataframe.Content
+        target = dataframe.iloc[:, 1:]
+        return data, target
         
     def split_dataset(self, train_size, random_state):
         """
@@ -143,9 +150,9 @@ class TripAdvisor:
         test = dataframe.drop(train.index)
         
         X_train = train.Content
-        y_train = train.iloc[:, 3:]
+        y_train = train.iloc[:, 1:]
         
         X_test = test.Content
-        y_test = test.iloc[:, 3:]
+        y_test = test.iloc[:, 1:]
         
         return X_train, y_train, X_test, y_test
