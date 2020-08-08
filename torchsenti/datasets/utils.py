@@ -6,6 +6,7 @@ import errno
 import tarfile
 from typing import Any, Callable, List, Iterable, Optional, TypeVar
 import zipfile
+import gdown
 from pyunpack import Archive
 
 import torch
@@ -36,9 +37,14 @@ def download_and_extract_archive(
         extract_root = download_root
     if not filename:
         filename = os.path.basename(url)
-
-    download_url(url, download_root, filename, md5)
-
+    
+    if 'drive' in url:
+        output = os.path.join(download_root, filename)
+        gdown.download(url, output, quiet=False)
+    else :
+        # Normal link
+        download_url(url, download_root, filename, md5)
+    
     archive = os.path.join(download_root, filename)
     print("Extracting {} to {}".format(archive, extract_root))
     extract_archive(archive, extract_root, remove_finished)
