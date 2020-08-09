@@ -5,6 +5,7 @@ import shutil
 import pandas as pd
 import torch
 import json
+import bigjson
 from torchsenti.datasets.utils import download_and_extract_archive
 from tqdm import tqdm
 
@@ -108,26 +109,20 @@ class YelpReview:
         print('Total reviews : ', len(processed_dict))
         print('Processed Done !')
         shutil.rmtree(self.raw_folder)
+    
+    
+    def load_some_data(self, num_reviews):
+        column_names = ['stars', 'useful', 'funny', 'cool', 'text']
+        df = pd.DataFrame(columns = column_names)
         
-        
-    def split_dataset(self, train_size, random_state):
-        """
-        Args :
-            train_size : size of train data (between 0 and 1)
-            random_state : seed value
-        
-        return X_train, y_train, X_test, y_test in DataFrame format
-        """
-        
-        dataframe = pd.read_csv(os.path.join(self.processed_folder, 'yelp_review.json'))
-        
-        train = dataframe.sample(frac=train_size, random_state=random_state)
-        test = dataframe.drop(train.index)
-        
-        X_train = train.Content
-        y_train = train.iloc[:, 3:]
-        
-        X_test = test.Content
-        y_test = test.iloc[:, 3:]
-        
-        return X_train, y_train, X_test, y_test
+        with open(os.path.join(self.processed_folder, 'yelp_review.json'), 'rb') as file:
+            j = bigjson.load(file)
+            for idx in tqdm(range(num_reviews)):
+                element = j[idx]
+                new_row = {'stars':element.values()[0], 
+                           'useful':element.values()[1],
+                           'funny':element.values()[2],
+                           'cool':element.values()[3], 
+                           'text':element.values()[4]}
+                df.loc[idx] = new_row
+        return df
