@@ -42,6 +42,9 @@ class CitySearch:
             print('Get Processed Dataset !')
             os.makedirs(self.processed_folder, exist_ok=True)
             self.convert_data()
+            data, target = self.load_dataset()
+            self.data = data
+            self.target = target
 
         else :
             print('Get Raw Dataset !')
@@ -103,7 +106,7 @@ class CitySearch:
         
         i = 0
 
-        for file in tqdm(data_file) :
+        for file in data_file :
             tree = ET.parse(file)
             root = tree.getroot()
             reviews = root.find('Reviews')
@@ -124,8 +127,14 @@ class CitySearch:
         
         print('Processed Done !')
         shutil.rmtree(self.raw_folder)
-        
-        
+    
+    
+    def load_dataset(self):
+        dataframe = pd.read_csv(os.path.join(self.processed_folder, 'City Search Dataset.csv'))
+        data = dataframe[['Title','Body','Pros','Cons']]
+        target = dataframe[['Rating']]
+        return data, target
+    
     def split_dataset(self, train_size, random_state):
         """
         Args :

@@ -4,15 +4,19 @@ import glob
 import shutil
 import pandas as pd
 import torch
+import json
+import bigjson
 from torchsenti.datasets.utils import download_and_extract_archive
+from tqdm import tqdm
 
 class YelpReview:
-    """ Trip Advisor <http://times.cs.uiuc.edu/~wang296/Data/> Dataset
+    """ Yelp Review <https://drive.google.com/uc?id=1Ii9WF1Onh66wMHZKtGi55gw2dZ3m1Drd> 
+    Mirror Link Dataset
     
     Args:
-        root (string): Root directory of dataset where ``TripAdvisor/raw/*.dat`` exist.
+        root (string): Root directory of dataset where ``YelpReview/raw/*.json`` exist.
         
-        processed (bool): If True = Download, extract, combine to one .csv file. 
+        processed (bool): If True = Download, extract, preprocessing dataset. 
         If False = Download and extract original dataset only
         
         download (bool, optional): If true, downloads the dataset from the internet and
@@ -21,8 +25,7 @@ class YelpReview:
     
     """
     
-    resources = ("http://times.cs.uiuc.edu/~wang296/Data/LARA/TripAdvisor/Review_Texts.zip")
-    dataset_file = 'dataset.pt'
+    resources = ("https://drive.google.com/uc?id=1Ii9WF1Onh66wMHZKtGi55gw2dZ3m1Drd")
     
     def __init__(self, root, processed=False, download=False):
         self.root = root
@@ -40,7 +43,7 @@ class YelpReview:
         if self.processed:
             print('Get Processed Dataset !')
             os.makedirs(self.processed_folder, exist_ok=True)
-            self.convert_data()
+            self.preprocessing_data()
 
         else :
             print('Get Raw Dataset !')
@@ -53,8 +56,6 @@ class YelpReview:
             if not self._check_exists_raw():
                     raise RuntimeError('Raw Dataset not found.' +
                                        ' You can use download=True to download it')
-
-        data_file = self.dataset_file
 
     
     @property
@@ -72,80 +73,56 @@ class YelpReview:
         return (os.path.exists(self.processed_folder))
 
     def download_data(self):
-        """Download the TripAdvisor data if it doesn't exist in raw_folder already."""
+        """Download the YelpReview data if it doesn't exist in raw_folder already."""
         
         # download files
-        filename = self.resources.rpartition('/')[2]
+        filename = 'yelp_review.zip'
         download_and_extract_archive(self.resources, download_root=self.raw_folder, filename=filename)
 
         print('Done!')
         
             
-    def convert_data(self):
-        """Convert *.dat file to .csv file"""
+    def preprocessing_data(self):
+        """ Preprocessing *.json file """
         
-        if os.path.exists(os.path.join(self.processed_folder, 'Trip Advisor Dataset.csv')):
-            print('Trip Advisor Dataset.csv is already owned')
+        if os.path.exists(os.path.join(self.processed_folder, 'yelp_review.json')):
+            print('yelp_review.json is already owned')
             return
         
-        data_file = glob.glob(self.raw_folder+'/*.dat')
+        data_file = glob.glob(self.raw_folder+'/*.json')[0]
         
-        use_features = ['<Author>', '<Content>', '<Date>', '<No. Reader>', '<No. Helpful>',
-                        '<Overall>', '<Value>', '<Rooms>', '<Location>', '<Cleanliness>',
-                        '<Check in / front desk>', '<Service>', '<Business service>']
-        
-        # read *.dat
-        all_dat_file = []
-        for file in data_file:
-            datContent = [i.strip() for i in open(file).readlines()][4:]
-            all_dat_file.append(datContent)
-        
-        # Combine all *.dat
-        reviews = []
-        review = []
+        processed_dict = []
+        with open(data_file, 'r') as f:
+            for line in tqdm(f):
+                data = json.loads(line)
+                # initializing Remove keys 
+                rem_list = ['review_id', 'user_id', 'business_id', 'date'] 
+                # Using pop() + list comprehension 
+                # Remove multiple keys from dictionary 
+                [data.pop(key) for key in rem_list]
 
-        for datContent in all_dat_file:
-            for dat in datContent:
-                if dat == '':
-                    reviews.append(review)
-                    review = []
-                else :
-                    for feat in use_features:
-                        if feat in dat:
-                            review.append(dat.split('>')[1])
+                processed_dict.append(data)
+
+        with open(os.path.join(self.processed_folder, 'yelp_review.json'), 'w') as fp:
+            json.dump(processed_dict, fp)
                             
-        print('Total reviews : ', len(reviews))
-        
-        col = ['Author','Content','Date','No.Reader','No.Helpful','Overall',
-               'Value','Rooms','Location','Cleanliness','Check in front desk',
-               'Service','Business service']
-
-        df = pd.DataFrame(reviews, columns=col)
-        
-        df.to_csv(self.processed_folder+'/Trip Advisor Dataset.csv', index=False)
-        
+        print('Total reviews : ', len(processed_dict))
         print('Processed Done !')
         shutil.rmtree(self.raw_folder)
+    
+    
+    def load_some_data(self, num_reviews):
+        column_names = ['stars', 'useful', 'funny', 'cool', 'text']
+        df = pd.DataFrame(columns = column_names)
         
-        
-    def split_dataset(self, train_size, random_state):
-        """
-        Args :
-            train_size : size of train data (between 0 and 1)
-            random_state : seed value
-        
-        return X_train, y_train, X_test, y_test in DataFrame format
-        """
-        
-        dataframe = pd.read_csv(os.path.join(self.processed_folder, 'Trip Advisor Dataset.csv'))
-        
-        train = dataframe.sample(frac=train_size, random_state=random_state)
-        test = dataframe.drop(train.index)
-        
-        X_train = train.Content
-        y_train = train.iloc[:, 3:]
-        
-        X_test = test.Content
-        y_test = test.iloc[:, 3:]
-        
-        return X_train, y_train, X_test, y_test
+        with open(os.path.join(self.processed_folder, 'yelp_review.json'), 'rb') as file:
+            j = bigjson.load(file)
+            for idx in tqdm(range(num_reviews)):
+                element = j[idx]
+                new_row = {'stars':element.values()[0], 
+                           'useful':element.values()[1],
+                           'funny':element.values()[2],
+                           'cool':element.values()[3], 
+                           'text':element.values()[4]}
+                df.loc[idx] = new_row
+        return df
