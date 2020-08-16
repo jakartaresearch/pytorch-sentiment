@@ -1,11 +1,12 @@
 import os
 import os.path
 import hashlib
+import gdown
 import gzip
 import errno
 import tarfile
-from typing import Any, Callable, List, Iterable, Optional, TypeVar
 import zipfile
+from typing import Any, Callable, List, Iterable, Optional, TypeVar
 from pyunpack import Archive
 
 import torch
@@ -84,7 +85,6 @@ def download_url(url: str, root: str, filename: Optional[str] = None, md5: Optio
         # check integrity of downloaded file
         if not check_integrity(fpath, md5):
             raise RuntimeError("File not found or corrupted.")
-            
             
 def _is_tarxz(filename: str) -> bool:
     return filename.endswith(".tar.xz")

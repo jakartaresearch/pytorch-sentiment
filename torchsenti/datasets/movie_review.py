@@ -13,9 +13,10 @@ class MovieReview():
 
     """
     
-    resources = ('http://www.cs.cornell.edu/people/pabo/movie-review-data/review_polarity.tar.gz')
+    resources = ('https://drive.google.com/uc?id=1jRR6G0-Di2jWO0jkciCWL1hO8b3tLt0y')
+    filename = 'review_polarity.tar.gz'
     
-    def __init__(self, root, download=False):
+    def __init__(self, root=".", download=False):
         self.root = root
         self.download = download
 
@@ -25,7 +26,9 @@ class MovieReview():
         if not self._check_exists():
             raise RuntimeError('Dataset not found.' +
                                ' You can use download=True to download it')
-    
+        
+        self.data = self.get_dict
+        
     @property
     def raw_folder(self):
         return os.path.join(self.root, self.__class__.__name__, 'raw')
@@ -47,9 +50,34 @@ class MovieReview():
         os.makedirs(self.processed_folder, exist_ok=True)
 
         # download files
-        filename = self.resources.rpartition('/')[2]
-        download_and_extract_archive(self.resources, download_root=self.raw_folder, filename=filename)
+        download_and_extract_archive(self.resources, download_root=self.raw_folder, filename=self.filename)
 
         print('Done!')
     
+    def read_txt(self, path):
+        with open(path, 'r') as f:
+            data = f.read()
+            
+        return data
     
+    @property
+    def get_dict(self):
+        paths = glob.glob(os.path.join(self.raw_folder, 'txt_sentoken', '*', '*'))
+        
+        data_dict = {'text': [], 'label': []}
+        for path in paths:
+            sentiment = path.split('/')[-2]
+            review = self.read_txt(path)
+            
+            data_dict['text'].append(review)
+            data_dict['label'].append(sentiment)
+        
+        return data_dict
+    
+    def set_split(self):
+        data_dict = self.get_dict
+        
+        X_train= data_dict['text']
+        y_train = data_dict['label']
+        
+        return X_train, y_train

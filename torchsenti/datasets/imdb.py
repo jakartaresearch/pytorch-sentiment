@@ -29,7 +29,9 @@ class IMDB:
             raise RuntimeError('Dataset not found.' +
                                ' You can use download=True to download it')
         
-        self.data = self._formating_data()
+        self.data = self.get_dict
+        
+        
 
     @property
     def raw_folder(self):
@@ -63,29 +65,45 @@ class IMDB:
             
         return text
     
-    def _formating_data(self):
-        train_pos_path_files = glob.glob(os.path.join(self.root, "IMDB/raw/aclImdb/train/pos/*"))
-        train_neg_path_files = glob.glob(os.path.join(self.root, "IMDB/raw/aclImdb/train/neg/*"))
+    def _iter_path(self, path_list):
+        data_dict = {'text': [], 'label': []}
+        for path in path_list:
+            content = _read_text(path)
+            label = path.split('/')[-2]
+            
+            data_dict['text'].append(content)
+            data_dict['label'].append(label)
+            
+        return data_dict
+    
+    @property
+    def get_dict(self):
+        """
+        listing all path and read the file
+        """
+        train_pos = glob.glob(os.path.join(self.raw_folder, 'aclImdb', 'train', 'pos', '*'))
+        train_neg = glob.glob(os.path.join(self.raw_folder, 'aclImdb', 'train', 'neg', '*'))
+        test_pos = glob.glob(os.path.join(self.raw_folder, 'aclImdb', 'test', 'pos', '*'))
+        test_neg = glob.glob(os.path.join(self.raw_folder, 'aclImdb', 'test', 'neg', '*'))
         
-        test_pos_path_files = glob.glob(os.path.join(self.root, "IMDB/raw/aclImdb/test/pos/*"))
-        test_neg_path_files = glob.glob(os.path.join(self.root, "IMDB/raw/aclImdb/test/neg/*"))
+        data = self._iter_path(train_pos + train_neg + test_pos + test_neg)
         
-        train_pos_corpus = [self._read_txt(path) for path in train_pos_path_files[:5]]
-        train_pos_label = ['positive'] * len(train_pos_corpus)
-        train_neg_corpus = [self._read_txt(path) for path in train_neg_path_files[:5]]
-        train_neg_label = ['negative'] * len(train_neg_corpus)
+        return data
+    
+    def split_dataset(self):
+        """
+        split data set into X_train, X_test, y_train, y_test
+        """
         
-        X_train = train_pos_corpus + train_neg_corpus
-        y_train = train_pos_label + train_neg_label
+        train_pos = glob.glob(os.path.join(self.raw_folder, 'aclImdb', 'train', 'pos', '*'))
+        train_neg = glob.glob(os.path.join(self.raw_folder, 'aclImdb', 'train', 'neg', '*'))
+        test_pos = glob.glob(os.path.join(self.raw_folder, 'aclImdb', 'test', 'pos', '*'))
+        test_neg = glob.glob(os.path.join(self.raw_folder, 'aclImdb', 'test', 'neg', '*'))
         
-        test_pos_corpus = [self._read_txt(path) for path in test_pos_path_files[:5]]
-        test_pos_label = ['postive'] * len(test_pos_corpus)
-        test_neg_corpus = [self._read_txt(path) for path in test_neg_path_files[:5]]
-        test_neg_label = ['negative'] * len(test_neg_corpus)
+        train = self._iter_path(train_pos+test_neg)
+        X_train, y_train = train['text'], train['label']
+        test = self._iter_path(train_neg+test_neg)
+        X_test, y_test = test['text'], test['label']
         
-        X_test = test_pos_corpus + test_neg_corpus
-        y_test = test_pos_label + test_neg_label
-        
-        return X_train, X_test, y_train, y_test
-        
+        return X_train, X_test, y_train, y_tetst
         
