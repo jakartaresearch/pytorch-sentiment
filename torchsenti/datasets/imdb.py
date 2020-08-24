@@ -68,7 +68,7 @@ class IMDB:
     def _iter_path(self, path_list):
         data_dict = {'text': [], 'label': []}
         for path in path_list:
-            content = _read_text(path)
+            content = self._read_txt(path)
             label = path.split('/')[-2]
             
             data_dict['text'].append(content)

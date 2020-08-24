@@ -1,7 +1,6 @@
 import sys
 import os.path as path
 from setuptools import setup, find_packages
-from torchsenti import __version__
 
 here = path.abspath(path.dirname(__file__))
 
@@ -12,7 +11,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='torchsenti',
-    version=__version__,
+    version='0.0.8',
     description='A Sentiment Analysis Library for Research on top of PyTorch',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -20,6 +19,7 @@ setup(
     author='Ruben Stefanus, Andreas Chandra, and Andhika Setia Pratama',
     author_email='researchjair@gmail.com',
     url='https://github.com/jakartaresearch/pytorch-sentiment',
+    packages=find_packages(),
     keywords=['sentiment-analysis', 'pytorch', 'deep-learning', 'machine-learning'],
     install_requires=[
         'torch>=1.4.0,<1.6.0',
