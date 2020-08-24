@@ -1,32 +1,37 @@
+import sys
+import os.path as path
 from setuptools import setup, find_packages
-from version import VERSION
+from torchsenti import __version__
 
 here = path.abspath(path.dirname(__file__))
 
-sys.path.insert(0, path.join(here, 'torchmeta'))
+sys.path.insert(0, path.join(here, 'torchsenti'))
+
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name='torchsenti',
-    version=VERSION,
-    description='Sentiment Analysis Library for Researcher with PyTorch',
+    version=__version__,
+    description='A Sentiment Analysis Library for Research on top of PyTorch',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     license='MIT',
-    author='Andreas Chandra, Ruben Stefanus, and Andhika Setia Pratama',
-    author_email='andestjen@gmail.com',
+    author='Ruben Stefanus, Andreas Chandra, and Andhika Setia Pratama',
+    author_email='researchjair@gmail.com',
     url='https://github.com/jakartaresearch/pytorch-sentiment',
     keywords=['sentiment-analysis', 'pytorch', 'deep-learning', 'machine-learning'],
-    packages=find_packages(exclude=['docs', 'tests', 'examples']),
     install_requires=[
         'torch>=1.4.0,<1.6.0',
     ],
-    package_data={'torchsenti': ['torchsenti/datasets/assets/*']},
     include_package_data=False,
     classifiers=[
-        'Development Status :: 0.0.1 - Development/Alpha',
-        'Topic :: Natural Language Processing :: Scientific/Engineering :: Artificial Intelligence',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
+        'Topic :: Scientific/Engineering',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
     ],
 )
